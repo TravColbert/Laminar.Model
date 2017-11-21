@@ -128,3 +128,28 @@ aDb.push({
 console.log(aDb);
 
 console.log("Set an individual property");
+aDb[0].username = "Nannette";
+console.log(aDb);
+aDb.setMethod("find",function(k,v) {
+  let records = aDb.filter(function(record) {
+    return record[k]==v;
+  });
+  return records;
+});
+console.log(aDb.find);
+// Object.defineProperty(
+//   aDb,
+//   "find",
+//   {
+//     configurable:false,
+//     enumerable:false,
+//     value:function(k,v) {
+//       let records = aDb.filter(function(record) {
+//         return record[k]==v;
+//       });
+//       return records;
+//     }
+//   }
+// );
+let foundRecords = aDb.find("username","Tom");
+console.log(foundRecords[0]);
