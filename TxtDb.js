@@ -63,6 +63,9 @@ module.exports = (function() {
     };
     this.verify = (field,data) => {
       if(this.verificationFunctions.hasOwnProperty(field)) {
+        for(var c=0;c<this.verificationFunctions[field].length;c++) {
+          
+        }
         return this.verificationFunctions[field](data);
       }
       return data;
