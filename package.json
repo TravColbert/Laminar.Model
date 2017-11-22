@@ -1,0 +1,25 @@
+{
+  "name": "txtdb",
+  "version": "1.0.0",
+  "description": "Text-based database library for fast prototyping",
+  "main": "TxtDb.js",
+  "scripts": {
+    "test": "node ./txtDb.test.js | faucet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TravColbert/txtDb.git"
+  },
+  "author": "trav.colbert@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TravColbert/txtDb/issues"
+  },
+  "homepage": "https://github.com/TravColbert/txtDb#readme",
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "tap-dot": "^1.0.5",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.8.0"
+  }
+}
