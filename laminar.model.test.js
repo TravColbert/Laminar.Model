@@ -3,7 +3,10 @@ const Laminar = require('../Laminar.js/laminar.model.node.js');
 var userDbHandlerFunctionObj = {};
 // This creates a new Laminar model obj (array) with a handler object that we 
 // can add handler functions to
-var userDb = Laminar.createModel([],userDbHandlerFunctionObj,true);
+// var userDb = Laminar.createModel([],userDbHandlerFunctionObj,true);
+// ^^^ The 'true' at the end say: show all debug logs
+// vvv No 'debug' logs
+var userDb = Laminar.createModel([],userDbHandlerFunctionObj);
 
 // Add some verification functions when we add a user:
 // This one makes sure all properties are there:
@@ -28,7 +31,7 @@ userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receive
 
 userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
   if(Array.isArray(target) && property=="length") return value;
-  console.log("Adding timestamp");
+  console.log("This is setter function #3: TIMESTAMP");
   value.timestamp = Date.now();
   return value;
 });
@@ -105,7 +108,7 @@ var aDbHandlerFunctionObj = {};
 // vvv this will create a model with a bunch of SET triggers in place already
 var aDb = Laminar.createModel(JSON.parse(dbContents),userDbHandlerFunctionObj,true);
 // vvv this will create a model with no SET triggers
-var aDb = Laminar.createModel(JSON.parse(dbContents),aDbHandlerFunctionObj,true);
+// var aDb = Laminar.createModel(JSON.parse(dbContents),aDbHandlerFunctionObj,true);
 
 var testDbHandlerFunctionObj = {};
 // This creates a new Laminar model obj (array) with a handler object that we 
@@ -118,38 +121,53 @@ timestamp: 1511306623186 },
 email: 'jones@dataimpressions.com',
 password: 'HASHED:mypassword',
 timestamp: 1511306623190 } ],testDbHandlerFunctionObj,true);
-console.log(testDb);
-console.log(aDb);
+
+console.log("** Result:\n",testDb);
+console.log("** Result:\n",aDb);
+
 aDb.push({
   username:"Tom",
   email: "tommy@dataimpressions.com",
   password: "test123!"
 });
-console.log(aDb);
+console.log("Results:\n",aDb);
 
-console.log("Set an individual property");
+console.log("** Set an individual property 'username=Nannette'");
 aDb[0].username = "Nannette";
-console.log(aDb);
-aDb.setMethod("find",function(k,v) {
-  let records = aDb.filter(function(record) {
+console.log("Results:\n",aDb);
+
+console.log("** Create a 'custom' function 'find'");
+aDb.addMethod("find",function(k,v) {
+  let records = this.filter(function(record) {
     return record[k]==v;
   });
   return records;
 });
-console.log(aDb.find);
-// Object.defineProperty(
-//   aDb,
-//   "find",
-//   {
-//     configurable:false,
-//     enumerable:false,
-//     value:function(k,v) {
-//       let records = aDb.filter(function(record) {
-//         return record[k]==v;
-//       });
-//       return records;
-//     }
-//   }
-// );
+
+console.log("** Invoking 'find(username,Tom)'");
 let foundRecords = aDb.find("username","Tom");
-console.log(foundRecords[0]);
+console.log("** Result:\n",foundRecords[0]);
+
+console.log("** Let's add some CRUD-style functions");
+aDb.addMethod("add",function(value) {
+  console.log("This is my new little add function!");
+  console.log(value);
+  this.push(value);
+});
+
+console.log("** Add a new user called 'Joe':");
+aDb.add({
+  username:"Joe",
+  email:"joe@dataimpressions.com",
+  password:"1111"
+});
+
+console.log("** Results:\n",aDb);
+
+console.log("** Add a new user called 'Timmy' but 'username' is missing:");
+aDb.add({
+  email:"timmy@dataimpressions.com",
+  password:"2222"
+})
+
+console.log("** Result:\n",aDb);
