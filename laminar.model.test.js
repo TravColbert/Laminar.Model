@@ -1,4 +1,5 @@
-const Laminar = require('../Laminar.js/laminar.model.node.js');
+const test = require('tape');
+const Laminar = require('./laminar.model.node.js');
 
 var userDbHandlerFunctionObj = {};
 // This creates a new Laminar model obj (array) with a handler object that we 
@@ -52,122 +53,38 @@ var userRecord = {
   password:"this is a test"
 }
 
-userDb.push(userRecord);
-
-console.log(userDb[0]);
-
-delete userRecord.password;
-
-try {
+test('Create a new Laminar Model', (t) => {
+  t.ok(userDb,"Laminar Model created");
   userDb.push(userRecord);
-} catch(e) {
-  console.log("Value not set");
-}
-
-console.log(userDb);
-
-userRecord.test = "Hi there!";
-
-console.log(userDb);
-
-userDb.push({
-  username:"jimmy",
-  email:"jones@dataimpressions.com",
-  password:"mypassword"
+  t.end();
 });
 
-userDb.save = function() {
-  console.log("Saving:",JSON.stringify(userDb));
-}
-
-console.log(userDb);
-
-console.log("Ok... let's save this DB");
-let saveDb = function(property) {
-  if(property=="length") return;
-  console.log("Saving:",property,":",userDb[property]);
-}
-userDb.__save(saveDb);
-
-console.log("Get some values");
-userDb.forEach(function(v,i,a) {
-  console.log(i,v.username);
-});
-for(var c=0;c<userDb.length;c++) {
-  console.log(c,userDb[c].username);
-}
-
-var dbContents = JSON.stringify(userDb.__save());
-console.log("Here is the DB now:");
-console.log(dbContents);
-console.log("Now, let's create another DB");
-
-var aDbHandlerFunctionObj = {};
-// This creates a new Laminar model obj (array) with a handler object that we 
-// can add handler functions to.
-// vvv this will create a model with a bunch of SET triggers in place already
-var aDb = Laminar.createModel(JSON.parse(dbContents),userDbHandlerFunctionObj,true);
-// vvv this will create a model with no SET triggers
-// var aDb = Laminar.createModel(JSON.parse(dbContents),aDbHandlerFunctionObj,true);
-
-var testDbHandlerFunctionObj = {};
-// This creates a new Laminar model obj (array) with a handler object that we 
-// can add handler functions to
-var testDb = Laminar.createModel([ { username: 'travis',
-email: 'travis@dataimpressions.com',
-password: 'HASHED:this is a test',
-timestamp: 1511306623186 },
-{ username: 'jimmy',
-email: 'jones@dataimpressions.com',
-password: 'HASHED:mypassword',
-timestamp: 1511306623190 } ],testDbHandlerFunctionObj,true);
-
-console.log("** Result:\n",testDb);
-console.log("** Result:\n",aDb);
-
-aDb.push({
-  username:"Tom",
-  email: "tommy@dataimpressions.com",
-  password: "test123!"
-});
-console.log("Results:\n",aDb);
-
-console.log("** Set an individual property 'username=Nannette'");
-aDb[0].username = "Nannette";
-console.log("Results:\n",aDb);
-
-console.log("** Create a 'custom' function 'find'");
-aDb.addMethod("find",function(k,v) {
-  let records = this.filter(function(record) {
-    return record[k]==v;
-  });
-  return records;
+test('Set handlers work right', (t) => {
+  t.equal("HASHED:this is a test",userDb[0].password,"Password should be HASHED");
+  t.ok(userDb[0].hasOwnProperty("timestamp"),"Look for 'timestamp' property in db");
+  t.end();
 });
 
-console.log("** Invoking 'find(username,Tom)'");
-let foundRecords = aDb.find("username","Tom");
-console.log("** Result:\n",foundRecords[0]);
-
-console.log("** Let's add some CRUD-style functions");
-aDb.addMethod("add",function(value) {
-  console.log("This is my new little add function!");
-  console.log(value);
-  this.push(value);
-});
-
-console.log("** Add a new user called 'Joe':");
-aDb.add({
-  username:"Joe",
-  email:"joe@dataimpressions.com",
-  password:"1111"
-});
-
-console.log("** Results:\n",aDb);
-
-console.log("** Add a new user called 'Timmy' but 'username' is missing:");
-aDb.add({
-  email:"timmy@dataimpressions.com",
-  password:"2222"
+test('Access DB like a simple array', (t) => {
+  t.equal(userDb[0].username,userRecord.username);
+  t.end();
 })
 
-console.log("** Result:\n",aDb);
+test('Verification handlers fail with error', (t) => {
+  delete userRecord.username;
+  t.ok(!userRecord.hasOwnProperty("username"),"New user object is badly-formed");
+  t.throws(function() { userDb.push(userRecord) },"Badly-formed user object can't be added");
+  t.end();
+});
+
+test('Add a second object', (t) => {
+  let records = userDb.push({
+    username:"jimmy",
+    email:"jones@dataimpressions.com",
+    password:"mypassword"
+  });
+  t.equal(records,2,"Records don't match how many should be in the DB");
+  t.equal(userDb[--records].username,"jimmy",'Record does not match');
+  t.equal(userDb[records].password,"HASHED:mypassword",userDb[0].password,"Password should be HASHED");
+  t.end();
+});
