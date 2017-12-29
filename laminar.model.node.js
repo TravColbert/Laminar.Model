@@ -154,7 +154,19 @@ Laminar.createModel = function(obj,handlerFunctionObj,debug) {
   obj = obj || {};
   let proxyHandlerObj = makeProxyHandlerObj(handlerFunctionObj);
   let newProxyObj = new Proxy(obj,proxyHandlerObj);
-  
+
+  Object.defineProperty(
+    newProxyObj,
+    "__isLaminarModel",
+    {
+      configurable:false,
+      enumerable:false,
+      value:function() {
+        return true;
+      }
+    }
+  );
+
   Object.defineProperty(
     newProxyObj,
     "__save",

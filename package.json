@@ -4,7 +4,7 @@
   "description": "Text-based database library for fast prototyping",
   "main": "TxtDb.js",
   "scripts": {
-    "test": "node ./txtDb.test.js | faucet"
+    "test": "node ./laminar.model.test.js | faucet"
   },
   "repository": {
     "type": "git",

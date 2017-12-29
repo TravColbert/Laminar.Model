@@ -1,59 +1,139 @@
 const test = require('tape');
 const Laminar = require('./laminar.model.node.js');
 
-var userDbHandlerFunctionObj = {};
-// This creates a new Laminar model obj (array) with a handler object that we 
-// can add handler functions to
-// var userDb = Laminar.createModel([],userDbHandlerFunctionObj,true);
-// ^^^ The 'true' at the end say: show all debug logs
-// vvv No 'debug' logs
-var userDb = Laminar.createModel([],userDbHandlerFunctionObj);
+let baseDb,
+    baseDbHandlerFunctionObj;
 
-// Add some verification functions when we add a user:
-// This one makes sure all properties are there:
-userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
-  if(Array.isArray(target) && property=="length") return value;
-  console.log("This is setter function #1: VERIFY");
-  // I want to hash the password here:
-  if(!value.hasOwnProperty("password") || !value.hasOwnProperty("username") || !value.hasOwnProperty("email")) {
-    console.log("Missing value. Punting");
-    return;
-  }
-  return value;
-});
+let userDb, 
+    userDbHandlerFunctionObj;
 
-// This one pretends to hash the password:
-userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
-  if(Array.isArray(target) && property=="length") return value;
-  console.log("This is setter function #2: HASH");
-  value.password = "HASHED:" + value.password;
-  return value;
-});
+let testRecord = {
+  username:"Clark",
+  email:"ClarkKent@DailyPlanet.com",
+  password:"kryptonite"
+}
 
-userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
-  if(Array.isArray(target) && property=="length") return value;
-  console.log("This is setter function #3: TIMESTAMP");
-  value.timestamp = Date.now();
-  return value;
-});
-
-// This is a CHANGE trigger that pretends to email you.
-// CHANGE triggers don't have the ability to manipulate or 
-let triggerEmail = function(target,property) {
-  if(Array.isArray(target) && property=="length") return;
-  console.log("CHANGE:",property," changed. Emailing the new value.",target[property]);
-  return;
-};
-
-userDbHandlerFunctionObj.addHandler("change",triggerEmail);
-
-var userRecord = {
+let userRecord = {
   username:"travis",
   email:"travis@dataimpressions.com",
   password:"this is a test"
 }
 
+test('Create a basic Laminar Model', (t) => {
+  baseDbHandlerFunctionObj = {};
+  baseDb = Laminar.createModel([],baseDbHandlerFunctionObj);
+  t.ok(baseDb.__isLaminarModel(),"isLaminarModel() should be true");
+  baseDb.push(testRecord);
+  t.is(baseDb[0].username,"Clark","Should equal 'Clark'");
+  t.end();
+});
+
+test('Augment "set" trigger for basic Laminar Model', (t) => {
+  /* Let's make it so that each added record creates a 'key/ID' field
+   * This is something quite typical in databases, right?
+   * 
+   * This is going to be a 'set' trigger. Functions triggered by a 'set'
+   * will want at least 3 params: <target_object>,<property>,<value>.
+   * 
+   * Let's make the function first...
+   */
+  let generateRecordId = (target,property,value) => {
+    /* Unfortunately, we always have to test if Javascript is automatically
+     * manipulating the 'length' property in an Array-like object. If so we
+     * just return the value and move on...
+     */
+    if(Array.isArray(target) && property=="length") return value;
+
+    // target.filter((record) => {
+    //   return (record.id=proposedId);
+    // });
+
+    // let v = target.length;
+    value.id = target.reduce((accumulator,currentRecord) => {
+      if(!currentRecord.hasOwnProperty("id")) return accumulator;
+      if(currentRecord.id==accumulator) return ++accumulator;
+    },target.length);
+
+    return value;
+  }
+
+  /* Now, let's add this function to the queue of functions that get run when
+   * a 'set' is performed on our DB. (a push() will trigger a 'set')
+   */
+  baseDbHandlerFunctionObj.addHandler("set",generateRecordId);
+  /* Done! 
+   * Now, let's add another record and see what happens...
+   */
+  baseDb.push({
+    username:"JJ",
+    email:"JJEvans@GoodTimes.com",
+    password:"dynomite!"
+  });
+  /* Notice that we did not specify an 'id' field in the object above. Our little
+   * 'set' function should have done it for us... and generated a 1 (since there 
+   * should already be a 'Clark Kent' record there)
+   * Let's test for that...
+   */
+  t.is(baseDb[1].id,1,"Should be '1'");
+  t.is(baseDb.length,2,"Length should be 2");
+  t.comment(JSON.stringify(baseDb[1]));
+  baseDb.push({
+    username:"Fred",
+    email:"Fred@SanfordAndSon.com",
+    password:"Ethel!"
+  });
+  t.is(baseDb[2].id,2,"Should be '2'");
+  t.comment(JSON.stringify(baseDb[2]));
+  t.end();
+});
+
 test('Create a new Laminar Model', (t) => {
+  userDbHandlerFunctionObj = {};
+  // This creates a new Laminar model obj (array) with a handler object that we 
+  // can add handler functions to
+  // var userDb = Laminar.createModel([],userDbHandlerFunctionObj,true);
+  // ^^^ The 'true' at the end say: show all debug logs
+  // vvv No 'debug' logs
+  userDb = Laminar.createModel([],userDbHandlerFunctionObj);
+
+  // Add some verification functions when we add a user:
+  // This one makes sure all properties are there:
+  userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
+    if(Array.isArray(target) && property=="length") return value;
+    console.log("This is setter function #1: VERIFY");
+    // I want to hash the password here:
+    if(!value.hasOwnProperty("password") || !value.hasOwnProperty("username") || !value.hasOwnProperty("email")) {
+      console.log("Missing value. Punting");
+      return;
+    }
+    return value;
+  });
+
+  // This one pretends to hash the password:
+  userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
+    if(Array.isArray(target) && property=="length") return value;
+    console.log("This is setter function #2: HASH");
+    value.password = "HASHED:" + value.password;
+    return value;
+  });
+
+  userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
+    if(Array.isArray(target) && property=="length") return value;
+    console.log("This is setter function #3: TIMESTAMP");
+    value.timestamp = Date.now();
+    return value;
+  });
+
+  // This is a CHANGE trigger that pretends to email you.
+  // CHANGE triggers don't have the ability to manipulate or 
+  let triggerEmail = function(target,property) {
+    if(Array.isArray(target) && property=="length") return;
+    console.log("CHANGE:",property," changed. Emailing the new value.",target[property]);
+    return;
+  };
+
+  userDbHandlerFunctionObj.addHandler("change",triggerEmail);
+
   t.ok(userDb,"Laminar Model created");
   userDb.push(userRecord);
   t.end();
