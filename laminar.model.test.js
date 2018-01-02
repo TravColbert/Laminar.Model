@@ -44,15 +44,14 @@ test('Augment "set" trigger for basic Laminar Model', (t) => {
      */
     if(Array.isArray(target) && property=="length") return value;
 
-    // target.filter((record) => {
-    //   return (record.id=proposedId);
-    // });
-
-    // let v = target.length;
-    value.id = target.reduce((accumulator,currentRecord) => {
-      if(!currentRecord.hasOwnProperty("id")) return accumulator;
-      if(currentRecord.id==accumulator) return ++accumulator;
-    },target.length);
+    value.id = (function(){
+      let l = target.length;
+      while(target.filter(function(record){
+        if(!record.hasOwnProperty("id")) return false;
+        return record.id==l;
+      }).length>0) { l++; }
+      return l;
+    })();
 
     return value;
   }
@@ -83,9 +82,10 @@ test('Augment "set" trigger for basic Laminar Model', (t) => {
     password:"Ethel!"
   });
   t.is(baseDb[2].id,2,"Should be '2'");
-  t.comment(JSON.stringify(baseDb[2]));
+  t.comment(JSON.stringify(baseDb));
   t.end();
 });
+
 
 test('Create a new Laminar Model', (t) => {
   userDbHandlerFunctionObj = {};
@@ -117,6 +117,7 @@ test('Create a new Laminar Model', (t) => {
     return value;
   });
 
+  // This one adds a timestamp field
   userDbHandlerFunctionObj.addHandler("set",function(target,property,value,receiver) {
     if(Array.isArray(target) && property=="length") return value;
     console.log("This is setter function #3: TIMESTAMP");
