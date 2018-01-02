@@ -21,7 +21,12 @@ let userRecord = {
 
 test('Create a basic Laminar Model', (t) => {
   baseDbHandlerFunctionObj = {};
-  baseDb = Laminar.createModel([],baseDbHandlerFunctionObj);
+  baseDb = Laminar.createModel();
+  // baseDb = Laminar.createModel([],baseDbHandlerFunctionObj);
+  // You don't have to provide the handlerFunctionObj ^^^
+  // Just leave it blank and ask for it later
+  // Nor do you have to provide the type of data-store ([] or {}).
+  // We assume [] for DB list-style
   t.ok(baseDb.__isLaminarModel(),"isLaminarModel() should be true");
   baseDb.push(testRecord);
   t.is(baseDb[0].username,"Clark","Should equal 'Clark'");
@@ -55,6 +60,11 @@ test('Augment "set" trigger for basic Laminar Model', (t) => {
 
     return value;
   }
+
+  /**
+   * We can ask for the triggerFunctionHandlerObject like this:
+   */
+  baseDbHandlerFunctionObj = baseDb.__getHandlerObject();
 
   /* Now, let's add this function to the queue of functions that get run when
    * a 'set' is performed on our DB. (a push() will trigger a 'set')

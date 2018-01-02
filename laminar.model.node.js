@@ -151,7 +151,7 @@ Laminar.createModel = function(obj,handlerFunctionObj,debug) {
   }
 
   handlerFunctionObj = handlerFunctionObj || {};
-  obj = obj || {};
+  obj = obj || [];  // Assume a DB-style list
   let proxyHandlerObj = makeProxyHandlerObj(handlerFunctionObj);
   let newProxyObj = new Proxy(obj,proxyHandlerObj);
 
